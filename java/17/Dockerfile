@@ -20,33 +20,55 @@
 # SOFTWARE.
 #
 
-FROM        --platform=$TARGETOS/$TARGETARCH eclipse-temurin:17-jdk-jammy
-LABEL       author="Matthew Penner" maintainer="matthew@pterodactyl.io"
-LABEL       org.opencontainers.image.source="https://github.com/iShotFT/pterodactyl-docker-reg"
-LABEL       org.opencontainers.image.licenses=MIT
+FROM --platform=$TARGETOS/$TARGETARCH eclipse-temurin:17-jdk-jammy
+LABEL author="Matthew Penner" maintainer="matthew@pterodactyl.io"
+LABEL org.opencontainers.image.source="https://github.com/iShotFT/pterodactyl-docker-reg"
+LABEL org.opencontainers.image.licenses=MIT
 
-RUN         apt-get update -y \
-            && apt-get install -y \
-                lsof \
-                curl \
-                ca-certificates \
-                openssl \
-                git \
-                tar \
-                sqlite3 \
-                fontconfig \
-                libfreetype6 \
-                tzdata \
-                iproute2 \
-                libstdc++6 \
-                binutils \
-                build-essential \
-                libc6-dev \
-            && ldconfig \
-            && useradd -d /home/container -m container
+# Set environment variables for native library loading
+ENV LD_LIBRARY_PATH=/usr/lib:/usr/lib/x86_64-linux-gnu:/home/container
+ENV JAVA_TOOL_OPTIONS="-Djava.library.path=/usr/lib:/usr/lib/x86_64-linux-gnu:/home/container"
 
-USER        container
-ENV         USER=container HOME=/home/container
-WORKDIR     /home/container
-COPY        ./../entrypoint.sh /entrypoint.sh
-CMD         [ "/bin/bash", "/entrypoint.sh" ]
+RUN apt-get update -y \
+    && apt-get install -y \
+        lsof \
+        curl \
+        ca-certificates \
+        openssl \
+        git \
+        tar \
+        sqlite3 \
+        fontconfig \
+        libfreetype6 \
+        tzdata \
+        iproute2 \
+        libstdc++6 \
+        binutils \
+        build-essential \
+        libc6-dev \
+        libgcc1 \
+        libc6 \
+        libssl-dev \
+        libffi-dev \
+        libxml2-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libxrender1 \
+        libxtst6 \
+        libxi6 \
+        libxext6 \
+        libxrender1 \
+        mesa-utils \
+        xvfb \
+    && ldconfig \
+    && useradd -d /home/container -m container
+
+USER container
+ENV USER=container HOME=/home/container
+WORKDIR /home/container
+
+# Create directory for native libraries
+RUN mkdir -p /home/container/natives
+
+COPY ./../entrypoint.sh /entrypoint.sh
+CMD [ "/bin/bash", "/entrypoint.sh" ]
