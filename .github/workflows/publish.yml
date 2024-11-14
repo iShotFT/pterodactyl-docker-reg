@@ -1,6 +1,8 @@
 name: build java custom
 
-on: [push]
+on:
+    push:
+    workflow_dispatch:
 
 jobs:
   push:
