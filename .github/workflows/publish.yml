@@ -1,22 +1,32 @@
-name: publish
+name: build java custom
 
 on: [push]
 
 jobs:
-  publish-java17-image:
+  push:
+    name: "yolks:java_${{ matrix.tag }}"
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - 17
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4  # Updated to v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
+      - uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        run: |
-          docker build ./java/17 --tag ghcr.io/ishotft/java_17custom:latest
-          docker push ghcr.io/ishotft/java_17custom:latest
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+      - uses: docker/build-push-action@v4
+        with:
+          context: ./java
+          file: ./java/${{ matrix.tag }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/pterodactyl/yolks:java_${{ matrix.tag }}_custom
